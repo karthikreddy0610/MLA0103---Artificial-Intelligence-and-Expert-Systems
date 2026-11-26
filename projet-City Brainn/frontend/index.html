@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CityBrain - Smart Civic Grievance & Dispatch Network</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=2.5.0">
+  <!-- Leaflet GIS Map Styling -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+</head>
+<body>
+  <!-- Ambient Aurora Glow Orbs for Unique Modern Background -->
+  <div class="aurora-ambient" aria-hidden="true">
+    <div class="aurora-orb orb-1"></div>
+    <div class="aurora-orb orb-2"></div>
+    <div class="aurora-orb orb-3"></div>
+  </div>
+
+  <!-- Top Application Bar -->
+  <header class="app-header">
+    <div class="brand-container">
+      <div class="brand-icon">CB</div>
+      <div>
+        <div class="brand-title">CityBrain</div>
+        <div class="brand-subtitle">Smart Urban Grievance & Dispatch Network</div>
+      </div>
+    </div>
+
+    <!-- Dynamic Role Navigation Tabs -->
+    <nav class="nav-tabs" id="navTabsContainer">
+      <button class="nav-tab active" data-tab="lodge">📝 File Complaint</button>
+      <button class="nav-tab" data-tab="track">🔍 Track Grievance</button>
+      <button class="nav-tab" data-tab="map">🗺️ Public GIS Map</button>
+      <button class="nav-tab" data-tab="notices">📢 Public Notices</button>
+    </nav>
+
+    <!-- Top Right Controls: Alerts Drawer + Status Pill + Role Mode Switcher -->
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <button type="button" id="alertsDrawerBtn" class="alerts-pill-btn" title="View Real-Time Citizen SMS & WhatsApp Dispatches">
+        <span>📲</span>
+        <span>Alerts</span>
+        <span class="alerts-count" id="alertsCountBadge">3</span>
+      </button>
+
+      <div class="status-pill" id="connectionStatus">
+        <span class="status-indicator"></span>
+        <span id="connectionText">Checking Backend...</span>
+      </div>
+
+      <div class="role-badge-container">
+        <div id="roleCurrentPill" class="role-current-pill role-pill-user">
+          <span id="roleIcon">👤</span>
+          <span id="roleLabel">Citizen Portal</span>
+        </div>
+        <button type="button" id="roleToggleBtn" class="role-action-btn role-btn-login" title="Click to authenticate as Municipal Official / Admin">
+          <span id="roleBtnIcon">🔐</span>
+          <span id="roleBtnText">Admin Login</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Municipal Admin Operational Banner (Only displayed when Admin Command Mode is active) -->
+  <div id="adminModeBanner" class="admin-mode-banner" style="display: none;">
+    <div class="admin-banner-inner">
+      <div class="admin-banner-left">
+        <span class="admin-pulse-dot"></span>
+        <span class="admin-banner-title">MUNICIPAL COMMAND CONSOLE</span>
+        <span class="admin-banner-sep">|</span>
+        <span class="admin-banner-sub">Chief Dispatcher Clearance &bull; Full Administrative Authority</span>
+      </div>
+      <div class="admin-banner-right">
+        <span class="admin-scope-badge">⚡ Triage & Approvals</span>
+        <span class="admin-scope-badge">👷 Field Dispatch</span>
+        <span class="admin-scope-badge">📢 Official Broadcast</span>
+        <button type="button" id="adminBannerExitBtn" class="btn-banner-exit" title="Return to Public Citizen Portal">
+          🚪 Exit Admin View ➔
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <main class="main-content">
+
+    <!-- ==================== PEOPLE VIEW: LODGE GRIEVANCE ==================== -->
+    <section id="view-lodge" class="tab-view">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Report a Civic Incident or Grievance</h2>
+          <p class="card-description">
+            Submit urban issues with live GPS coordinates, photographic & video evidence. Built-in anti-fraud verification prevents duplicates and speeds up municipal dispatch.
+          </p>
+        </div>
+
+        <form id="complaintForm">
+          <div class="form-grid">
+            <div>
+              <label class="form-label">Citizen Name *</label>
+              <input type="text" id="citizenName" class="form-input" placeholder="e.g. Alex Morgan" required>
+            </div>
+
+            <div>
+              <label class="form-label">Contact Phone *</label>
+              <input type="tel" id="citizenPhone" class="form-input" placeholder="e.g. +1 555-019-4820" required>
+            </div>
+
+            <div>
+              <label class="form-label">Email Address *</label>
+              <input type="email" id="citizenEmail" class="form-input" placeholder="e.g. alex.m@example.com" required>
+            </div>
+
+            <div>
+              <label class="form-label">Grievance Category</label>
+              <select id="complaintCategory" class="form-select">
+                <option value="Roads">🛣️ Roads & Infrastructure (Potholes, Signals)</option>
+                <option value="Water">💧 Water Supply & Pipeline Leaks</option>
+                <option value="Electricity">⚡ Electricity, Power & Street Lights</option>
+                <option value="Sanitation">🗑️ Waste & Garbage Management</option>
+                <option value="Ambulance">🚑 Emergency Healthcare & Ambulance</option>
+                <option value="Police">👮 Police, Crime & Safety</option>
+                <option value="Emergency">🚨 Disaster / Structural Collapse / Fire</option>
+                <option value="General">🏛️ General Civic Services</option>
+              </select>
+            </div>
+
+            <div class="form-group-full">
+              <label class="form-label">Detailed Incident Description *</label>
+
+              <!-- Modern Prompt Card Container (Styled cleanly like Image 1 without models) -->
+              <div class="chat-prompt-card" id="chatPromptCard">
+                <textarea id="complaintText" class="chat-prompt-textarea" placeholder="Describe the problem in any language (or click 🎙️ to speak in Hindi, Tamil, Telugu, Kannada, English...)" required></textarea>
+
+                <!-- ChatGPT-Style Live Audio Waveform Visualizer Bar -->
+                <div id="chatgptVoiceBar" class="chatgpt-voice-bar" style="display: none;">
+                  <div class="chatgpt-voice-left">
+                    <span class="chatgpt-rec-dot"></span>
+                    <span id="chatgptVoiceStatusText">Listening... speak in any language</span>
+                    <!-- Dynamic Sound Wave Bars reacting to live mic volume -->
+                    <div class="chatgpt-sound-waves" id="chatgptSoundWaves">
+                      <div class="wave-bar" id="wb1"></div>
+                      <div class="wave-bar" id="wb2"></div>
+                      <div class="wave-bar" id="wb3"></div>
+                      <div class="wave-bar" id="wb4"></div>
+                      <div class="wave-bar" id="wb5"></div>
+                    </div>
+                  </div>
+                  <div class="chatgpt-voice-actions">
+                    <button type="button" id="chatgptVoiceDoneBtn" class="btn-voice-done" title="Finish speaking & translate to English">
+                      ✓ Done
+                    </button>
+                    <button type="button" id="chatgptVoiceCancelBtn" class="btn-voice-cancel" title="Cancel voice recording">
+                      ✕
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Bottom Toolbar inside input container -->
+                <div class="chat-prompt-toolbar" id="chatPromptToolbar">
+                  <!-- Left: Translation Target & Language Indicator -->
+                  <div class="chat-prompt-meta">
+                    <span class="chat-lang-pill" title="Spoken input in any language is automatically translated to English">
+                      <span class="dot-live"></span>
+                      <span id="voiceActiveLangLabel">Telugu -> English Meaning</span>
+                    </span>
+                    <select id="voiceLangSelect" class="chat-lang-dropdown" title="Spoken Language for Voice Input">
+                      <option value="auto" selected>🌐 Auto Detect Language</option>
+                      <option value="hi-IN">🇮🇳 हिन्दी (Hindi)</option>
+                      <option value="te-IN">🇮🇳 తెలుగు (Telugu)</option>
+                      <option value="ta-IN">🇮🇳 தமிழ் (Tamil)</option>
+                      <option value="kn-IN">🇮🇳 ಕನ್ನಡ (Kannada)</option>
+                      <option value="en-IN">🇬🇧 English Dictation</option>
+                    </select>
+                  </div>
+
+                  <!-- Right: Controls with Integrated Mic Icon Button -->
+                  <div class="chat-prompt-controls">
+                    <button type="button" id="enhanceMeaningBtn" class="chat-enhance-btn" title="Convert colloquial or regional words into formal municipal civic meaning">
+                      ✨ Translate Meaning
+                    </button>
+                    <!-- Sleek Integrated Mic Button (As in Image 1) -->
+                    <button type="button" id="voiceRecordBtn" class="chat-mic-icon-btn" title="Click to speak in any language - Auto translates to English">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="22"></line>
+                        <line x1="8" y1="22" x2="16" y2="22"></line>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Translation notification badge -->
+              <div id="translationNotice" class="translation-toast-badge" style="display: none;">
+                <span style="font-size: 1rem;">🌐</span>
+                <span id="translationNoticeText">Auto-translated to English</span>
+              </div>
+
+              <!-- Duplicate Warning Banner (Anti-Fraud) -->
+              <div id="duplicateWarningBox" class="duplicate-warning-banner" style="display: none;">
+                <span style="font-size: 1.25rem;">⚠️</span>
+                <div>
+                  <strong>Potential Duplicate Detected:</strong> A similar issue was already filed nearby under reference <span id="duplicateUidSpan" style="font-weight: 800; font-family: monospace;">CB-XXXXXX</span>. Your submission will be linked to strengthen existing investigation urgency.
+                </div>
+              </div>
+
+              <!-- Real-time NLP & AI Priority Preview -->
+              <div class="triage-preview" style="flex-direction: column; gap: 0.5rem; align-items: stretch;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                  <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <span style="font-size: 0.8125rem; font-weight: 700; color: var(--text-muted);">AI Priority Assessment:</span>
+                    <span id="previewPriority" class="triage-badge badge-status">Awaiting input</span>
+                  </div>
+                  <div style="font-size: 0.8125rem; font-weight: 700; color: var(--text-main);">
+                    Auto-Assigned: <span id="previewDept" style="color: var(--primary); font-weight: 800;">Intelligent Auto-Route</span>
+                  </div>
+                </div>
+                <!-- NLP Prompt Understanding Row -->
+                <div id="nlpIntentRow" style="display: none; padding-top: 0.4rem; border-top: 1px dashed var(--border-light); font-size: 0.75rem; color: var(--text-muted); justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                  <div>
+                    🧠 <strong style="color: var(--text-main);">NLP Intent:</strong> <span id="nlpIntentText" style="color: var(--primary); font-weight: 600;">Analyzing prompt...</span>
+                  </div>
+                  <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <span id="nlpConfidenceBadge" style="background: var(--bg-subtle); padding: 0.15rem 0.55rem; border-radius: var(--radius-full); font-weight: 700; color: var(--primary);">Confidence: --</span>
+                    <span id="nlpSentimentBadge" style="background: var(--bg-subtle); padding: 0.15rem 0.55rem; border-radius: var(--radius-full); font-weight: 600; color: var(--text-muted);">Sentiment: --</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Incident Location Section (Manual Entry) -->
+            <div class="form-group-full">
+              <label class="form-label">
+                Incident Location <span style="color: var(--critical); font-weight: 800;">* (Manual Entry)</span>
+              </label>
+              <input type="text" id="addressInput" class="form-input" placeholder="Type landmark, street, door no., or area manually (e.g. Rajiv Gandhi Salai, near Govt High School, Sriperumbudur)" required>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem;">
+                ✍️ Enter the physical location / landmark manually so municipal teams know the exact address.
+              </div>
+
+              <!-- Location-Aware Existing Complaints / Avoid Duplicates Panel -->
+              <div id="locationDuplicatesPanel" class="location-duplicates-panel" style="display: none;">
+                <div class="location-duplicates-header">
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 1.15rem;">📍</span>
+                    <div>
+                      <strong style="color: #92400e; font-size: 0.86rem;">Existing Active Complaints at this Location:</strong>
+                      <div style="font-size: 0.75rem; color: #78350f;">Check if your defect is already being resolved by municipal teams before filing:</div>
+                    </div>
+                  </div>
+                  <span class="location-dup-count-badge" id="locationDupCountBadge">0 Found</span>
+                </div>
+                <div id="locationDuplicatesList" class="location-duplicates-list">
+                  <!-- Dynamically populated with active complaints at this location -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Verified Live Evidence Capture -->
+            <div class="form-group-full">
+              <label class="form-label" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <span>Verified Live Evidence Capture <span style="color: var(--primary); font-size: 0.82rem; font-weight: 700;">(Live Device Camera)</span></span>
+                <span style="font-size: 0.73rem; color: var(--primary); font-weight: 800; display: flex; align-items: center; gap: 0.3rem;">
+                  <span>🔴</span> Live Device Camera
+                </span>
+              </label>
+              <div class="media-upload-area" id="cameraLaunchArea">
+                <div style="font-size: 2.2rem; margin-bottom: 0.3rem;">📸 🎥</div>
+                <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-main);">
+                  Live Photo & Video Evidence Capture
+                </div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin: 0.25rem auto 1rem auto; max-width: 520px; line-height: 1.5;">
+                  Take an authentic live photo or video using your device camera as on-site visual proof. GPS coordinates are gathered and watermarked automatically.
+                </div>
+                
+                <div style="display: flex; gap: 0.85rem; justify-content: center; flex-wrap: wrap;">
+                  <button type="button" id="startLivePhotoBtn" class="btn btn-primary" style="padding: 0.75rem 1.6rem; box-shadow: 0 4px 18px var(--primary-glow);">
+                    📷 Open Live Camera Photo
+                  </button>
+                  <button type="button" id="startLiveVideoBtn" class="btn btn-secondary" style="padding: 0.75rem 1.6rem; border-color: #cbd5e1;">
+                    🎥 Open Live Video Camera
+                  </button>
+                </div>
+
+                <div style="margin: 0.75rem auto 0 auto; display: flex; justify-content: center;">
+                  <label class="privacy-mask-toggle" title="Anonymize facial features and vehicle registration numbers before saving evidence">
+                    <input type="checkbox" id="privacyMaskToggle" checked>
+                    <span>🛡️ Forensic Privacy Auto-Masking (Blur Faces & Vehicle Plates)</span>
+                  </label>
+                </div>
+
+                <div id="mediaPreviewContainer" class="media-preview-container"></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 1.75rem; display: flex; justify-content: flex-end;">
+            <button type="submit" id="submitBtn" class="btn btn-primary" style="padding: 0.85rem 2.25rem;">
+              Submit Complaint to City Portal
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ==================== PEOPLE & ADMIN VIEW: TRACK STATUS ==================== -->
+    <section id="view-track" class="tab-view" style="display: none;">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Live Complaint Lifecycle Tracker</h2>
+          <p class="card-description">
+            Enter your unique Tracking ID (e.g., CB-1092F1) to check real-time investigation stages, officer assignment, and resolution.
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; max-width: 600px;">
+          <input type="text" id="trackInput" class="form-input" placeholder="Enter Complaint UID (e.g. CB-1092F1)" style="font-family: monospace; font-size: 1rem; text-transform: uppercase;">
+          <button id="trackBtn" class="btn btn-primary">
+            Track Status
+          </button>
+        </div>
+
+        <div id="trackerResult" style="display: none; margin-top: 2rem; border-top: 1px solid var(--border-light); padding-top: 1.5rem;">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== PEOPLE VIEW: PUBLIC NOTICES ==================== -->
+    <section id="view-notices" class="tab-view" style="display: none;">
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <h2 class="card-title">Official Municipal Broadcast Notices</h2>
+          <p class="card-description">
+            Official emergency alerts, infrastructure advisories, scheduled power/water maintenance, and civic updates from administrative departments.
+          </p>
+        </div>
+      </div>
+
+      <div id="noticesContainer" class="notices-grid">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- ==================== GIS MAP & CHRONIC ZONES VIEW ==================== -->
+    <section id="view-map" class="tab-view" style="display: none;">
+      <div class="card gis-card" style="margin-bottom: 1.25rem;">
+        <!-- Header & Primary Controls -->
+        <div class="card-header gis-header">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+              <h2 class="card-title" style="margin-bottom: 0;">🗺️ Municipal GIS Command Map & Incident Heatmap</h2>
+              <span class="live-pulse-badge">LIVE SATELLITE & SENSOR SYNC</span>
+            </div>
+            <p class="card-description" style="margin-top: 4px;">
+              Real-time spatial distribution, multi-spectral thermal heatmaps, multi-layer base imagery, and automated chronic failure clustering.
+            </p>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            <button type="button" id="mapScanDuplicatesBtn" class="btn btn-secondary btn-sm" title="Scan your neighborhood for active reports to avoid duplicate filing" style="background: #fffbeb; border-color: #fde68a; color: #92400e; font-weight: 700;">
+              🛡️ Check My Area (Avoid Duplicates)
+            </button>
+            <button type="button" id="mapLocateMeBtn" class="btn btn-secondary btn-sm" title="Center on your current GPS location">
+              📍 Locate Me
+            </button>
+            <button type="button" id="refreshMapBtn" class="btn btn-secondary btn-sm" title="Refresh all live incidents">
+              🔄 Refresh
+            </button>
+            <button type="button" id="mapFullscreenBtn" class="btn btn-secondary btn-sm" title="Toggle fullscreen view">
+              ⛶ Fullscreen
+            </button>
+          </div>
+        </div>
+
+        <!-- GIS Multi-Control Command Toolbar -->
+        <div class="gis-command-toolbar">
+          <!-- Left: Base Imagery Layer Switcher -->
+          <div class="gis-toolbar-group">
+            <span class="gis-group-label">BASE MAP:</span>
+            <div class="btn-group-toggle" id="baseMapToggleGroup">
+              <button type="button" class="gis-toggle-btn active" data-basemap="streets" title="Esri High-Definition World Streets">🗺️ Streets</button>
+              <button type="button" class="gis-toggle-btn" data-basemap="google" title="Google Maps Global Road Network">🌐 Google Roads</button>
+              <button type="button" class="gis-toggle-btn" data-basemap="satellite" title="Esri High-Resolution Satellite Imagery">🛰️ Satellite</button>
+              <button type="button" class="gis-toggle-btn" data-basemap="dark" title="High-Contrast Dark Operations Map">🌙 Dark Mode</button>
+            </div>
+          </div>
+
+          <!-- Middle: View Layer Switcher -->
+          <div class="gis-toolbar-group">
+            <span class="gis-group-label">OVERLAY:</span>
+            <div class="btn-group-toggle" id="mapLayerToggleGroup">
+              <button type="button" class="gis-toggle-btn active" data-layer="pins">📌 Incident Pins</button>
+              <button type="button" class="gis-toggle-btn" data-layer="duplicates" title="Highlight active reports at locations so citizens can see and avoid duplicates" style="color: #d97706; font-weight: 800;">🛡️ Avoid Duplicates</button>
+              <button type="button" class="gis-toggle-btn" data-layer="heatmap">🌡️ Thermal Heatmap</button>
+              <button type="button" class="gis-toggle-btn" data-layer="chronic">⚠️ Chronic Zones</button>
+              <button type="button" class="gis-toggle-btn" data-layer="all">🌐 All Layers</button>
+            </div>
+          </div>
+
+          <!-- Right: Filters & Live Search -->
+          <div class="gis-toolbar-group" style="flex: 1; justify-content: flex-end;">
+            <!-- Priority Filter -->
+            <select id="mapFilterPriority" class="form-select gis-filter-select" title="Filter by incident priority">
+              <option value="ALL">All Priorities</option>
+              <option value="CRITICAL">🔴 Critical (< 30m)</option>
+              <option value="HIGH">🟠 High (4h)</option>
+              <option value="MEDIUM">🟡 Medium (24-48h)</option>
+              <option value="RESOLVED">🟢 Resolved / Closed</option>
+            </select>
+
+            <!-- Department Filter -->
+            <select id="mapFilterDept" class="form-select gis-filter-select" title="Filter by municipal department">
+              <option value="ALL">All Departments</option>
+              <option value="Public Works Department (PWD)">🛣️ Public Works (PWD)</option>
+              <option value="Electricity & Power Board">⚡ Electricity & Power</option>
+              <option value="Water Supply & Sewerage Board">💧 Water & Sewerage</option>
+              <option value="Public Health & Sanitation Department">🗑️ Sanitation & Waste</option>
+              <option value="Emergency Healthcare & Ambulance Services">🚑 Healthcare / EMS</option>
+              <option value="Police & Law Enforcement">👮 Police & Safety</option>
+            </select>
+
+            <!-- Quick Map Address/UID Search -->
+            <div class="gis-search-wrapper">
+              <input type="text" id="mapSearchInput" class="gis-search-input" placeholder="🔍 Search Ticket ID or street...">
+              <button type="button" id="mapSearchBtn" class="gis-search-btn">Go</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chronic Failure Zone Alert Banner -->
+        <div id="chronicZoneBanner" class="map-chronic-banner" style="display: none;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="font-size: 1.6rem;">⚠️</span>
+            <div>
+              <strong style="color: #92400e; font-size: 0.95rem;">Chronic Incident Clusters Detected:</strong>
+              <div id="chronicZoneDesc" style="color: #78350f; font-size: 0.8125rem; margin-top: 2px;">
+                Analyzing spatial recurrence patterns across municipal sectors...
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <button type="button" id="zoomChronicBtn" class="btn btn-sm btn-primary" style="background: #d97706; border-color: #b45309; white-space: nowrap;">
+              🎯 Focus Cluster
+            </button>
+          </div>
+        </div>
+
+        <!-- The Map Relative Viewport Container with Overlays -->
+        <div class="gis-map-viewport-wrapper" id="gisMapViewport">
+          <!-- Live Floating Glassmorphic HUD Badge (Top-Right) -->
+          <div class="gis-hud-panel" id="gisHudPanel">
+            <div class="hud-item hud-critical">
+              <span class="hud-dot dot-critical"></span>
+              <span class="hud-val" id="hudCriticalCount">0</span>
+              <span class="hud-lbl">Critical</span>
+            </div>
+            <div class="hud-divider"></div>
+            <div class="hud-item hud-high">
+              <span class="hud-dot dot-high"></span>
+              <span class="hud-val" id="hudHighCount">0</span>
+              <span class="hud-lbl">High</span>
+            </div>
+            <div class="hud-divider"></div>
+            <div class="hud-item hud-chronic">
+              <span class="hud-dot dot-chronic"></span>
+              <span class="hud-val" id="hudChronicCount">0</span>
+              <span class="hud-lbl">Chronic Zones</span>
+            </div>
+            <div class="hud-divider"></div>
+            <div class="hud-item hud-resolved">
+              <span class="hud-dot dot-resolved"></span>
+              <span class="hud-val" id="hudResolvedCount">0</span>
+              <span class="hud-lbl">Resolved</span>
+            </div>
+          </div>
+
+          <!-- Floating Incident Inspector Sidebar / Drawer (Slides in on pin click) -->
+          <div class="gis-inspector-drawer" id="gisInspectorDrawer" style="display: none;">
+            <div class="inspector-header">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span id="inspectorPriorityBadge" class="triage-badge badge-critical">CRITICAL</span>
+                <span id="inspectorUid" class="inspector-uid">#CB-XXXXXX</span>
+              </div>
+              <button type="button" id="closeInspectorBtn" class="inspector-close-btn" title="Close inspector">✕</button>
+            </div>
+            <div class="inspector-body" id="inspectorBody">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- The Leaflet Map Container -->
+          <div id="incidentMap"></div>
+        </div>
+
+        <!-- Map Footer Legend & Spatial Analytics -->
+        <div class="gis-footer-analytics">
+          <div class="gis-legend-items">
+            <span class="gis-legend-tag"><span class="legend-color-dot" style="background: #ef4444;"></span> <strong>Critical</strong> (&lt; 30m SLA)</span>
+            <span class="gis-legend-tag"><span class="legend-color-dot" style="background: #f97316;"></span> <strong>High</strong> (4h SLA)</span>
+            <span class="gis-legend-tag"><span class="legend-color-dot" style="background: #3b82f6;"></span> <strong>Medium</strong> (24-48h SLA)</span>
+            <span class="gis-legend-tag"><span class="legend-color-dot" style="background: #10b981;"></span> <strong>Resolved / Closed</strong></span>
+            <span class="gis-legend-tag"><span class="legend-color-dot" style="background: #8b5cf6;"></span> <strong>Suspected Duplicate</strong></span>
+            <span class="gis-legend-tag"><span class="legend-color-dot" style="background: #f59e0b; border: 1.5px dashed #b45309;"></span> <strong>Chronic Zone (&le; 300m)</strong></span>
+          </div>
+          <div class="gis-engine-tag">
+            <span>🌐 Leaflet GIS Core v1.9.4</span> • <span>Spatial Clustering Engine: Haversine &le; 300m</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== FIELD OFFICER RAPID DISPATCH VIEW ==================== -->
+    <section id="view-dispatch" class="tab-view" style="display: none;">
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+          <div>
+            <h2 class="card-title">👷 Field Rapid Action Dispatch Center</h2>
+            <p class="card-description">
+              Mobile-optimized dispatch queue for on-ground municipal action teams. Navigate directly with live GPS and record verified "After" resolution evidence.
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <select id="dispatchFilterDept" class="form-select" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; width: auto;">
+              <option value="ALL">All Departments</option>
+              <option value="Public Works Department (PWD)">Public Works (PWD)</option>
+              <option value="Water Supply & Sewerage Board">Water Supply Board</option>
+              <option value="Electricity & Power Board">Electricity Board</option>
+              <option value="Public Health & Sanitation Department">Sanitation Dept</option>
+              <option value="Emergency Healthcare & Ambulance Services">Healthcare & Ambulance</option>
+              <option value="Police & Law Enforcement">Police</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="dispatchWorkOrdersContainer" class="dispatch-grid">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== ADMIN VIEW: COMMAND CENTER ==================== -->
+    <section id="view-admin" class="tab-view" style="display: none;">
+
+      <!-- Admin Cockpit HUD Bar -->
+      <div class="admin-cockpit-hud">
+        <div class="admin-hud-left">
+          <div class="admin-live-pulse-badge">
+            <span class="pulse-ring"></span>
+            <span class="pulse-core"></span>
+            <span class="pulse-text">LIVE DISPATCH TELEMETRY</span>
+          </div>
+          <span class="admin-hud-divider">|</span>
+          <div class="admin-hud-telemetry">
+            <span class="telemetry-item">🛰️ <strong>15 Municipal Wards</strong> Monitored</span>
+            <span class="telemetry-item">⚡ <strong>3.5s</strong> Live Stream</span>
+            <span class="telemetry-item">🛡️ <strong>98.4%</strong> SLA Compliance</span>
+          </div>
+        </div>
+
+        <div class="admin-hud-right">
+          <button type="button" class="admin-hud-btn" onclick="switchTab('broadcast')" title="Issue broadcast advisory to citizens">
+            📢 Broadcast Notice
+          </button>
+          <button type="button" class="admin-hud-btn" id="exportAdminCsvBtn" title="Export current complaints as CSV">
+            📥 Export CSV
+          </button>
+          <button type="button" class="admin-hud-btn btn-hud-primary" id="refreshAdminBtn" title="Force sync latest incidents">
+            🔄 Live Sync
+          </button>
+        </div>
+      </div>
+
+      <!-- Upgraded Stats KPI Metric Deck -->
+      <div class="admin-metrics-grid">
+        <!-- 1. Total Grievances -->
+        <div class="admin-metric-card metric-card-total">
+          <div class="metric-card-header">
+            <div class="metric-title-group">
+              <span class="metric-badge">All Inflow</span>
+              <span class="metric-caption">Total Civic Reports</span>
+            </div>
+            <div class="metric-icon-halo">📋</div>
+          </div>
+          <div class="metric-card-body">
+            <div class="metric-number" id="statTotal">0</div>
+            <div class="metric-subtext">Active grievance inflow across all wards</div>
+          </div>
+          <div class="metric-card-footer">
+            <div class="metric-progress-bar"><div class="bar-fill" style="width: 100%; background: #3b82f6;"></div></div>
+          </div>
+        </div>
+
+        <!-- 2. Critical Emergencies -->
+        <div class="admin-metric-card metric-card-critical">
+          <div class="metric-card-header">
+            <div class="metric-title-group">
+              <span class="metric-badge badge-critical-pulse">🚨 &lt; 30m SLA</span>
+              <span class="metric-caption">Life / Safety Hazards</span>
+            </div>
+            <div class="metric-icon-halo halo-critical">⚡</div>
+          </div>
+          <div class="metric-card-body">
+            <div class="metric-number num-critical" id="statCritical">0</div>
+            <div class="metric-subtext">Immediate executive triage required</div>
+          </div>
+          <div class="metric-card-footer">
+            <div class="metric-progress-bar"><div class="bar-fill" style="width: 100%; background: #ef4444;"></div></div>
+          </div>
+        </div>
+
+        <!-- 3. Active Field Dispatches -->
+        <div class="admin-metric-card metric-card-progress">
+          <div class="metric-card-header">
+            <div class="metric-title-group">
+              <span class="metric-badge badge-progress">👷 On-Site Units</span>
+              <span class="metric-caption">Active Field Work Orders</span>
+            </div>
+            <div class="metric-icon-halo halo-progress">⚡</div>
+          </div>
+          <div class="metric-card-body">
+            <div class="metric-number num-progress" id="statProgress">0</div>
+            <div class="metric-subtext">Dispatched or underway with crews</div>
+          </div>
+          <div class="metric-card-footer">
+            <div class="metric-progress-bar"><div class="bar-fill" style="width: 100%; background: #f59e0b;"></div></div>
+          </div>
+        </div>
+
+        <!-- 4. Resolved Cases -->
+        <div class="admin-metric-card metric-card-resolved">
+          <div class="metric-card-header">
+            <div class="metric-title-group">
+              <span class="metric-badge badge-resolved">✅ Completed</span>
+              <span class="metric-caption">Verified Resolutions</span>
+            </div>
+            <div class="metric-icon-halo halo-resolved">🏆</div>
+          </div>
+          <div class="metric-card-body">
+            <div class="metric-number num-resolved" id="statResolved">0</div>
+            <div class="metric-subtext">Citizen-verified closed work orders</div>
+          </div>
+          <div class="metric-card-footer">
+            <div class="metric-progress-bar"><div class="bar-fill" style="width: 100%; background: #10b981;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grievance Triage Registry Card -->
+      <div class="admin-registry-card">
+        <!-- Control Header -->
+        <div class="admin-registry-header">
+          <div class="admin-registry-title-block">
+            <div class="registry-title-row">
+              <h2 class="admin-registry-title">Municipal Grievance Operations & Dispatch Queue</h2>
+              <span class="admin-queue-count" id="adminQueueCount">0 Incidents</span>
+            </div>
+            <p class="admin-registry-subtitle">
+              Live automated triage queue with multi-layer language understanding, duplicate verification, and one-click rapid dispatch.
+            </p>
+          </div>
+
+          <!-- Segmented Filter Pills -->
+          <div class="admin-filter-pills" id="adminFilterPillGroup">
+            <button type="button" class="admin-pill-btn active" data-filter="all">All <span class="pill-count" id="pillCountAll">0</span></button>
+            <button type="button" class="admin-pill-btn pill-btn-critical" data-filter="critical">🚨 Critical <span class="pill-count" id="pillCountCritical">0</span></button>
+            <button type="button" class="admin-pill-btn pill-btn-high" data-filter="high">🟠 High <span class="pill-count" id="pillCountHigh">0</span></button>
+            <button type="button" class="admin-pill-btn pill-btn-pending" data-filter="pending">🟡 Pending Triage <span class="pill-count" id="pillCountPending">0</span></button>
+            <button type="button" class="admin-pill-btn pill-btn-progress" data-filter="progress">⚡ Active Dispatch <span class="pill-count" id="pillCountProgress">0</span></button>
+            <button type="button" class="admin-pill-btn pill-btn-resolved" data-filter="resolved">✅ Resolved <span class="pill-count" id="pillCountResolved">0</span></button>
+          </div>
+        </div>
+
+        <!-- Command Toolbar Filter & Search Controls -->
+        <div class="admin-command-toolbar">
+          <div class="admin-search-box">
+            <span class="admin-search-icon">🔍</span>
+            <input type="text" id="adminSearchInput" class="admin-search-input" placeholder="Search by Ticket ID (#CB-...), citizen name, street/ward, or issue keywords...">
+            <button type="button" id="adminSearchClearBtn" class="admin-search-clear" style="display: none;" title="Clear search">✕</button>
+          </div>
+
+          <div class="admin-toolbar-dropdowns">
+            <!-- Department Filter -->
+            <select id="adminFilterDept" class="admin-toolbar-select" title="Filter by municipal department">
+              <option value="">🏢 All Departments</option>
+              <option value="Public Works Department (PWD)">🛣️ Public Works (PWD)</option>
+              <option value="Water Supply & Sewerage Board">💧 Water Supply & Sewerage</option>
+              <option value="Electricity & Power Board">⚡ Electricity & Power</option>
+              <option value="Public Health & Sanitation Department">🗑️ Health & Sanitation</option>
+              <option value="Emergency Healthcare & Ambulance Services">🚑 Healthcare & Ambulance</option>
+              <option value="Police & Law Enforcement">👮 Police & Safety</option>
+              <option value="Fire & Disaster Rescue Services">🚒 Fire & Rescue</option>
+            </select>
+
+            <!-- Sort By -->
+            <select id="adminSortOrder" class="admin-toolbar-select" title="Sort grievance order">
+              <option value="urgency">⚡ Highest Priority First</option>
+              <option value="newest">🕒 Newest Submissions First</option>
+              <option value="oldest">⏳ Oldest Pending First</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Table View -->
+        <div class="admin-table-container">
+          <table class="admin-triage-table">
+            <thead>
+              <tr>
+                <th style="width: 14%;">CASE REF / TIME</th>
+                <th style="width: 36%;">INCIDENT & CITIZEN</th>
+                <th style="width: 17%;">DEPARTMENT</th>
+                <th style="width: 12%;">PRIORITY & SLA</th>
+                <th style="width: 9%;">STATUS</th>
+                <th style="width: 12%; text-align: center;">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody id="complaintsTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== ADMIN VIEW: BROADCAST NOTICE ==================== -->
+    <section id="view-broadcast" class="tab-view" style="display: none;">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Broadcast Official Public Notice</h2>
+          <p class="card-description">
+            Publish municipal alerts and advisories directly to the Citizen Portal.
+          </p>
+        </div>
+
+        <form id="broadcastNoticeForm" style="max-width: 750px;">
+          <div class="form-grid">
+            <div class="form-group-full">
+              <label class="form-label">Notice Headline *</label>
+              <input type="text" id="noticeTitle" class="form-input" placeholder="e.g. Scheduled Water Pipeline Maintenance in Central Ward" required>
+            </div>
+
+            <div>
+              <label class="form-label">Issuing Department *</label>
+              <select id="noticeDept" class="form-select">
+                <option value="Municipal Corporation">🏛️ General Administration</option>
+                <option value="Emergency Healthcare & Ambulance Services">🚑 Emergency Healthcare & Ambulance</option>
+                <option value="Water Supply & Sewerage Board">💧 Water Supply & Sewerage</option>
+                <option value="Electricity & Power Board">⚡ Electricity & Power</option>
+                <option value="Public Works Department (PWD)">🛣️ Public Works (PWD)</option>
+                <option value="Fire & Disaster Rescue Services">🚒 Fire & Disaster Rescue</option>
+                <option value="Police & Law Enforcement">👮 Police & Law Enforcement</option>
+                <option value="Public Health & Sanitation Department">🗑️ Public Health & Sanitation</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="form-label">Urgency Level *</label>
+              <select id="noticeUrgency" class="form-select">
+                <option value="Info">ℹ️ General Information</option>
+                <option value="Alert">⚠️ Advisory / Maintenance Alert</option>
+                <option value="Emergency">🚨 Critical Emergency Announcement</option>
+              </select>
+            </div>
+
+            <div class="form-group-full">
+              <label class="form-label">Notice Details & Instructions *</label>
+              <textarea id="noticeContent" class="form-textarea" rows="4" placeholder="Provide full details, timings, helpline numbers, or alternative routes..." required></textarea>
+            </div>
+          </div>
+
+          <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+            <button type="submit" class="btn btn-primary" style="padding: 0.8rem 2rem;">
+              📢 Broadcast Notice to All Citizens
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Dossier Modal (View Full Details & Attached Evidence) -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-content">
+      <div id="detailModalBody"></div>
+      <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+        <button id="detailModalCloseBtn" class="btn btn-secondary">Close Dossier</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Assignment Modal -->
+  <div class="modal-overlay" id="assignModal">
+    <div class="modal-content" style="max-width: 480px;">
+      <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem;">Manual Dispatch & Assignment</h3>
+      <p style="font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+        Assign complaint <strong id="assignModalUid" style="color: var(--primary); font-family: monospace;"></strong> to a specific municipal team and field officer.
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <div>
+          <label class="form-label">Select Department</label>
+          <select id="assignDeptSelect" class="form-select">
+            <option value="Emergency Healthcare & Ambulance Services">🚑 Emergency Healthcare & Ambulance</option>
+            <option value="Water Supply & Sewerage Board">💧 Water Supply & Sewerage Board</option>
+            <option value="Electricity & Power Board">⚡ Electricity & Power Board</option>
+            <option value="Public Works Department (PWD)">🛣️ Public Works Department (PWD)</option>
+            <option value="Fire & Disaster Rescue Services">🚒 Fire & Disaster Rescue Services</option>
+            <option value="Police & Law Enforcement">👮 Police & Law Enforcement</option>
+            <option value="Public Health & Sanitation Department">🗑️ Public Health & Sanitation</option>
+            <option value="General Administration">🏛️ General Administration</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label">Designated Officer / Unit</label>
+          <input type="text" id="assignOfficerInput" class="form-input" placeholder="e.g. Inspector K. Raman (Unit 4)">
+        </div>
+      </div>
+
+      <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <button id="assignModalCancelBtn" class="btn btn-secondary">Cancel</button>
+        <button id="assignModalSubmitBtn" class="btn btn-primary">Confirm Assignment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div class="modal-overlay" id="successModal">
+    <div class="modal-content" style="max-width: 480px; text-align: center;">
+      <div style="width: 56px; height: 56px; background: #ecfdf5; color: #059669; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.75rem; margin-bottom: 1rem; font-weight: bold;">
+        ✓
+      </div>
+      <h3 style="font-size: 1.35rem; font-weight: 800; color: var(--text-main);">Grievance Logged Successfully</h3>
+      <p style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.25rem;">
+        Your report has been verified and registered into municipal operations.
+      </p>
+
+      <div style="background: var(--bg-subtle); border-radius: var(--radius-md); padding: 1.25rem; margin: 1.25rem 0; text-align: left;">
+        <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Tracking Reference UID</div>
+        <div id="modalUid" style="font-size: 1.6rem; font-weight: 900; color: var(--primary); font-family: monospace; margin: 0.25rem 0;">CB-000000</div>
+        
+        <div style="display: flex; justify-content: space-between; font-size: 0.8125rem; padding-top: 0.75rem; border-top: 1px solid var(--border-light); flex-wrap: wrap; gap: 0.5rem;">
+          <div>
+            <span style="color: var(--text-muted);">Priority:</span>
+            <span id="modalPriority" class="triage-badge badge-high" style="margin-left: 0.25rem;">HIGH</span>
+          </div>
+          <div>
+            <span style="color: var(--text-muted);">Status:</span>
+            <span id="modalValidity" class="triage-badge badge-valid" style="margin-left: 0.25rem;">Verified</span>
+          </div>
+          <div style="width: 100%; margin-top: 0.25rem;">
+            <span style="color: var(--text-muted);">Assigned To:</span>
+            <strong id="modalDept" style="margin-left: 0.25rem; color: var(--text-main);">Municipal Department</strong>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem;">
+        <button id="modalCloseBtn" class="btn btn-secondary" style="flex: 1;">Close</button>
+        <button id="modalTrackBtn" class="btn btn-primary" style="flex: 1;">Track Incident Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Duplicate Warning Confirmation Modal (User Confirmation Step) -->
+  <div class="modal-overlay modal" id="duplicateWarningModal">
+    <div class="modal-content" style="max-width: 540px; text-align: left;">
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+        <span style="font-size: 2.25rem;">⚠️</span>
+        <div>
+          <h3 style="font-size: 1.25rem; font-weight: 800; color: #92400e;">Possible Duplicate Complaint</h3>
+          <p style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 2px;">
+            A similar active issue has already been reported nearby.
+          </p>
+        </div>
+      </div>
+
+      <div id="duplicateModalContent" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.25rem;">
+        <!-- Filled dynamically -->
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; flex-wrap: wrap;">
+        <button id="dupModalCancelBtn" class="btn btn-secondary">Cancel</button>
+        <button id="dupModalViewBtn" class="btn btn-secondary" style="color: var(--primary); font-weight: 800;">🔍 View Existing Complaint</button>
+        <button id="dupModalForceSubmitBtn" class="btn btn-primary" style="background: #d97706; border-color: #b45309;">🚀 Submit Anyway</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resolution Verification Modal (Field / Admin "After" Proof Photo) -->
+  <div class="modal-overlay modal" id="resolveModal">
+    <div class="modal-content" style="max-width: 520px; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+        <h3 style="font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin: 0;">
+          📸 Verified Resolution Evidence
+        </h3>
+        <span id="resolveModalUid" style="font-family: var(--font-mono); font-weight: 800; color: var(--primary);">CB-XXXXXX</span>
+      </div>
+
+      <p style="font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.45;">
+        To prevent false closures, field officers must provide on-site photographic evidence of completed work before tickets are marked as resolved.
+      </p>
+
+      <form id="resolveForm">
+        <div style="margin-bottom: 1rem;">
+          <label class="form-label">On-Site Work Completion Notes *</label>
+          <textarea id="resolveNotes" class="form-textarea" rows="3" placeholder="Describe the physical fix executed (e.g. 50mm bitumen patch applied, line pressure restored, breaker replaced)..." required></textarea>
+        </div>
+
+        <div style="margin-bottom: 1.25rem;">
+          <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Resolution Proof Photo ("After") *</span>
+            <span style="font-size: 0.72rem; color: #059669; font-weight: 700;">🟢 On-Site Verified</span>
+          </label>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button type="button" id="resolveLaunchCameraBtn" class="btn btn-primary btn-sm" style="background: #059669; border-color: #047857;">
+              📷 Capture Resolution Photo
+            </button>
+            <button type="button" id="resolveSimulateBtn" class="btn btn-secondary btn-sm">
+              ✨ Simulate On-Site Fixed Photo
+            </button>
+          </div>
+          <div id="resolvePreviewContainer" style="margin-top: 0.75rem;"></div>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+          <button type="button" id="resolveCancelBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="resolveSubmitBtn" class="btn btn-primary" style="background: #059669; border-color: #047857;">
+            ✅ Confirm Resolution & Update Ticket
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Multi-Channel Citizen Alerts Drawer (Simulated WhatsApp & SMS Dispatches) -->
+  <div class="alerts-drawer" id="alertsDrawer">
+    <div class="drawer-header">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 1.35rem;">📲</span>
+        <div>
+          <strong style="font-size: 0.95rem; color: var(--text-main);">Live Citizen Dispatches</strong>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">SMS & WhatsApp Broadcast Gateway</div>
+        </div>
+      </div>
+      <button type="button" id="closeAlertsDrawerBtn" class="camera-close-btn" style="position: static; width: 28px; height: 28px;">✕</button>
+    </div>
+    <div class="drawer-body" id="alertsDrawerBody">
+      <!-- Dynamically filled with SMS and WhatsApp message bubbles -->
+    </div>
+  </div>
+
+  <!-- Live Camera & Synchronized Geotagging Viewfinder Modal -->
+  <div class="modal-overlay modal" id="liveCameraModal">
+    <div class="modal-content camera-modal-content">
+      <!-- Camera Header / HUD -->
+      <div class="camera-hud-top">
+        <div class="camera-live-badge">
+          <span class="live-dot"></span> <span id="cameraModeText">LIVE CAMERA PHOTO</span>
+        </div>
+        <div class="camera-gps-badge" id="cameraGpsBadge">
+          <span class="gps-pulse-dot"></span> <span id="cameraGpsText">Acquiring GPS Signal...</span>
+        </div>
+        <button type="button" id="closeCameraBtn" class="camera-close-btn" title="Close Camera">✕</button>
+      </div>
+
+      <!-- Viewfinder Viewport -->
+      <div class="camera-viewport-wrapper">
+        <video id="cameraVideo" autoplay playsinline muted></video>
+        <canvas id="cameraCanvas" style="display: none;"></canvas>
+        <canvas id="simulatedCanvas" style="display: none;"></canvas>
+
+        <!-- Viewfinder Reticle / Crosshair Overlay -->
+        <div class="camera-reticle">
+          <div class="reticle-corner top-left"></div>
+          <div class="reticle-corner top-right"></div>
+          <div class="reticle-corner bottom-left"></div>
+          <div class="reticle-corner bottom-right"></div>
+          <div class="reticle-crosshair"></div>
+        </div>
+
+        <!-- Overlaid Geotag Banner at bottom of viewfinder -->
+        <div class="camera-geotag-banner" id="cameraGeotagBanner">
+          <div style="font-weight: 800; font-size: 0.72rem; color: #38bdf8; display: flex; align-items: center; gap: 0.3rem;">
+            <span>📍</span> CITYBRAIN LIVE VERIFICATION SENSOR
+          </div>
+          <div id="cameraCoordinatesDisplay" style="font-family: var(--font-mono); font-size: 0.75rem; color: #f8fafc; margin-top: 2px;">
+            Lat: Acquiring... | Lng: Acquiring... | Accuracy: ±15m
+          </div>
+        </div>
+
+        <!-- Recording Indicator (for Video Mode) -->
+        <div id="recordingIndicator" class="recording-indicator" style="display: none;">
+          <span class="rec-dot"></span> REC <span id="recordingTimer">00:00</span>
+        </div>
+      </div>
+
+      <!-- Camera Bottom Controls -->
+      <div class="camera-hud-bottom">
+        <button type="button" id="switchCameraFacingBtn" class="btn btn-secondary btn-sm" title="Switch Lens" style="background: rgba(30, 41, 59, 0.85); color: #ffffff; border-color: rgba(255, 255, 255, 0.15); border-radius: var(--radius-full); padding: 0.45rem 0.95rem;">
+          🔄 Flip Lens
+        </button>
+
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.35rem;">
+          <button type="button" id="shutterBtn" class="camera-shutter-btn" title="Capture Evidence & Lock GPS">
+            <div class="shutter-inner" id="shutterInner"></div>
+          </button>
+          <span id="shutterLabel" style="font-size: 0.75rem; font-weight: 800; color: #f8fafc; letter-spacing: 0.04em;">
+            CAPTURE PHOTO + LOCK GPS
+          </span>
+        </div>
+
+        <button type="button" id="cancelCameraBtn" class="btn btn-secondary btn-sm" style="background: rgba(30, 41, 59, 0.85); color: #ffffff; border-color: rgba(255, 255, 255, 0.15); border-radius: var(--radius-full); padding: 0.45rem 0.95rem;">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Authentication Modal -->
+  <div class="modal-overlay modal" id="adminAuthModal">
+    <div class="modal-content" style="max-width: 440px; text-align: center;">
+      <div style="width: 56px; height: 56px; border-radius: 50%; background: #eff6ff; color: #2563eb; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 0.75rem; border: 2px solid #bfdbfe; box-shadow: 0 4px 12px rgba(37,99,235,0.15);">
+        🛡️
+      </div>
+      <h3 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-bottom: 0.25rem;">Municipal Official Login</h3>
+      <p style="font-size: 0.82rem; color: #64748b; margin-top: 0.2rem; margin-bottom: 1.25rem; line-height: 1.45;">
+        Restricted to authorized municipal administrators and dispatchers. Review AI triage, dispatch emergency crews, and broadcast official notices.
+      </p>
+
+      <form id="adminAuthForm" style="text-align: left;">
+        <div style="margin-bottom: 0.85rem;">
+          <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 4px;">Username</label>
+          <input type="text" id="adminAuthUsername" class="form-input" value="admin" placeholder="e.g. admin" style="font-size: 0.9rem;" autocomplete="username" required>
+        </div>
+        <div style="margin-bottom: 0.85rem;">
+          <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 4px;">Password</label>
+          <input type="password" id="adminAuthPassword" class="form-input" placeholder="Enter password (default: password)" style="font-size: 0.9rem; letter-spacing: 0.05em;" autocomplete="current-password" required>
+        </div>
+        <div id="adminAuthError" style="display: none; color: #ef4444; font-size: 0.8rem; font-weight: 700; margin-top: 0.4rem; margin-bottom: 0.5rem; text-align: center;">
+          ❌ Incorrect credentials. Access denied.
+        </div>
+
+        <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 0.6rem 0.8rem; margin: 0.85rem 0; font-size: 0.78rem; color: #64748b; display: flex; justify-content: space-between; align-items: center;">
+          <span>Credentials: <strong>admin / password</strong></span>
+          <button type="button" id="adminQuickLoginBtn" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 0.25rem 0.5rem;">
+            ⚡ Quick Fill
+          </button>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
+          <button type="button" id="adminAuthCancelBtn" class="btn btn-secondary" style="flex: 1;">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="flex: 1.2;">Authenticate ➔</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div class="toast" id="toast">
+    <div style="font-size: 1.25rem;">🔔</div>
+    <div id="toastMsg" style="font-size: 0.875rem; font-weight: 700; color: var(--text-main);">Notification</div>
+  </div>
+
+  <!-- Leaflet GIS Script -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Leaflet Heatmap Layer CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+  <script src="js/api.js?v=2.5.0"></script>
+  <script src="js/app.js?v=2.5.0"></script>
+</body>
+</html>

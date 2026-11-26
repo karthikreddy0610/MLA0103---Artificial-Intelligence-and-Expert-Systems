@@ -1,0 +1,29 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Large Datasets (> 100MB exceeds GitHub hard limit)
+*.csv
+*.zip
+InputData_CityBrain.csv
+InputData_CityBrain.zip
+
+# Environments
+.venv/
+env/
+venv/
+ENV/
+
+# System & OS Files
+.DS_Store
+desktop.ini
+Thumbs.db
+.idea/
+.vscode/
+
+# Temporary / Scratch Files
+*.tmp
+*.log
+test_write.txt
+65

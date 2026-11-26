@@ -1,0 +1,11 @@
+AI Auto-Ranking from Complaint Text
+Explainable AI
+Department Auto-Routing
+Severity Prediction (Minor / Major / Critical)
+Duplicate Complaint Detection (Avoid Spam)
+Smart Priority Boost Rules (“fire, bleeding, unconscious, gas leak, explosion”)
+Location Awareness + Nearby Risk [“Gas leak near school” → HIGH priority"]
+Response Recommendation (“What to do now?”)
+Resource Allocation Suggestions
+Real-time Status Workflow (Case Management) - New → Assigned → In Progress → Resolved → Closed
+History
